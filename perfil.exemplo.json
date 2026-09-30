@@ -1,0 +1,10 @@
+{
+  "valor_disponivel_reais": 10000,
+  "aporte_mensal_reais": 1000,
+  "horizonte": "3 anos",
+  "perfil_de_risco": "moderado",
+  "objetivo": "crescer o patrimônio com boa rentabilidade, superando o CDI",
+  "ja_possui": [],
+  "evitar_setores": [],
+  "ativos_de_interesse": ["PETR4.SA", "VALE3.SA", "ITUB4.SA", "WEGE3.SA", "BBAS3.SA", "TAEE11.SA"]
+}
