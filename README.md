@@ -8,19 +8,41 @@ Programa que monta uma recomendação de carteira de ações da B3 para o seu pe
 
 O resultado é salvo em `relatorio-AAAA-MM-DD.md`.
 
-## Como usar
+## Como usar no Windows com VS Code
+
+**Pré-requisitos:** instale o [Python 3.10 ou mais novo](https://www.python.org/downloads/) e marque **"Add python.exe to PATH"** durante a instalação. No VS Code, instale a extensão **Python** da Microsoft.
+
+1. No VS Code, abra a pasta do projeto (**Arquivo → Abrir Pasta**).
+2. Abra o terminal (**Terminal → Novo Terminal**) e instale as dependências:
+   ```powershell
+   py -m pip install -r requirements.txt
+   ```
+   Se aparecer "py não é reconhecido", use `python` no lugar de `py`.
+3. Crie o arquivo de chaves. Copie `.env.exemplo` para `.env` e cole as suas chaves:
+   ```powershell
+   copy .env.exemplo .env
+   copy perfil.exemplo.json perfil.json
+   ```
+   Depois edite `.env` e `perfil.json` no próprio VS Code. Se você não criar o `.env`, o programa pede as chaves ao iniciar.
+4. Teste sem chaves (usa dados **sintéticos** e não chama o Claude):
+   ```powershell
+   py consultor.py --offline --sem-claude
+   ```
+5. Rode para valer:
+   ```powershell
+   py consultor.py
+   ```
+   Outra opção é apertar **F5** e escolher *"Consultor: recomendação completa"*.
+
+**Se aparecer "No module named anthropic":** o VS Code está usando outro Python. Aperte `Ctrl+Shift+P`, escolha **Python: Select Interpreter**, selecione o Python 3.10 ou mais novo e rode o passo 2 de novo.
+
+### Linux / macOS
 
 ```bash
-pip install -r requirements.txt
-
-export ANTHROPIC_API_KEY=...        # console.anthropic.com
-export ALPHAVANTAGE_API_KEY=...     # grátis em alphavantage.co/support/#api-key
-
-cp perfil.exemplo.json perfil.json  # edite com seu valor, perfil de risco e ações
-python consultor.py
+python3 -m pip install -r requirements.txt
+cp .env.exemplo .env && cp perfil.exemplo.json perfil.json   # edite os dois
+python3 consultor.py
 ```
-
-Para testar sem gastar nada, rode `python consultor.py --offline --sem-claude`. Esse comando usa dados **sintéticos** e só mostra a parte quantitativa.
 
 ### Perfil (`perfil.json`)
 

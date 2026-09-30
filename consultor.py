@@ -4,19 +4,59 @@ Uso:
     python consultor.py                      # usa perfil.json
     python consultor.py --perfil meu.json    # outro perfil
     python consultor.py --offline --sem-claude   # teste com dados sintéticos, sem APIs
+
+As chaves de API podem ficar num arquivo .env na mesma pasta (veja .env.exemplo).
 """
 
-import argparse
-import json
 import sys
+
+if sys.version_info < (3, 10):
+    sys.exit(f"Este programa precisa do Python 3.10 ou mais novo (você está usando {sys.version.split()[0]}).")
+
+import argparse
+import getpass
+import json
+import os
 from datetime import datetime
 from pathlib import Path
 
-import anthropic
+PASTA = Path(__file__).resolve().parent
+
+try:
+    import anthropic
+    import requests  # noqa: F401  (usado em dados.py)
+except ImportError as erro:
+    sys.exit(
+        f"Falta instalar a biblioteca '{erro.name}'. Rode no terminal do VS Code:\n"
+        f'    "{sys.executable}" -m pip install -r requirements.txt'
+    )
 
 import analise
 import dados
 import recomendador
+
+
+def carregar_env() -> None:
+    """Lê chaves do arquivo .env (formato NOME=valor), sem sobrescrever variáveis já definidas."""
+    arquivo = PASTA / ".env"
+    if not arquivo.exists():
+        return
+    for linha in arquivo.read_text(encoding="utf-8-sig").splitlines():
+        linha = linha.strip()
+        if linha and not linha.startswith("#") and "=" in linha:
+            nome, valor = linha.split("=", 1)
+            os.environ.setdefault(nome.strip(), valor.strip().strip('"').strip("'"))
+
+
+def exigir_chave(nome: str, onde_obter: str) -> None:
+    if os.environ.get(nome):
+        return
+    print(f"A variável {nome} não está definida ({onde_obter}).")
+    valor = getpass.getpass(f"Cole sua {nome} (não aparece na tela) e tecle Enter: ").strip()
+    if not valor:
+        sys.exit(f"Sem {nome} não dá para continuar. Coloque-a no arquivo .env.")
+    os.environ[nome] = valor
+
 
 PESO_MAXIMO_POR_PERFIL = {"conservador": 0.20, "moderado": 0.30, "arrojado": 0.40}
 
@@ -31,13 +71,23 @@ def main() -> int:
     parser.add_argument("--offline", action="store_true", help="usa dados sintéticos (teste, não são reais)")
     parser.add_argument("--sem-claude", action="store_true", help="mostra só a análise quantitativa")
     args = parser.parse_args()
+    carregar_env()
+    if not args.offline:
+        exigir_chave("ALPHAVANTAGE_API_KEY", "chave grátis em alphavantage.co/support/#api-key")
+    if not args.sem_claude:
+        exigir_chave("ANTHROPIC_API_KEY", "crie em console.anthropic.com")
 
     caminho_perfil = Path(args.perfil)
+    if not caminho_perfil.is_absolute():
+        caminho_perfil = PASTA / caminho_perfil
     if not caminho_perfil.exists():
-        caminho_perfil = Path("perfil.exemplo.json")
+        caminho_perfil = PASTA / "perfil.exemplo.json"
         print(f"'{args.perfil}' não encontrado; usando {caminho_perfil}.")
     perfil = json.loads(caminho_perfil.read_text(encoding="utf-8"))
-    tickers = perfil["ativos_de_interesse"]
+    tickers = perfil.get("ativos_de_interesse") or []
+    if not tickers:
+        print("Informe pelo menos um ticker em 'ativos_de_interesse' no perfil (ex.: \"WEGE3.SA\").")
+        return 1
     peso_maximo = PESO_MAXIMO_POR_PERFIL.get(perfil.get("perfil_de_risco", "moderado"), 0.30)
     peso_maximo = max(peso_maximo, 1 / len(tickers))
 
@@ -75,7 +125,7 @@ def main() -> int:
         print(f"Erro ao consultar o Claude: {erro}")
         return 1
 
-    saida = Path(f"relatorio-{contexto['data_analise']}.md")
+    saida = PASTA / Path(f"relatorio-{contexto['data_analise']}.md")
     saida.write_text(relatorio, encoding="utf-8")
     print(relatorio)
     print(f"\nRelatório salvo em {saida}")

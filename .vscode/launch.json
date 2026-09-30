@@ -1,0 +1,22 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Consultor: recomendação completa",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/consultor.py",
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal"
+    },
+    {
+      "name": "Consultor: teste offline (sem chaves)",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/consultor.py",
+      "args": ["--offline", "--sem-claude"],
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal"
+    }
+  ]
+}
